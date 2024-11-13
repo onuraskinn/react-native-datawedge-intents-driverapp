@@ -5,28 +5,45 @@ import {
   ScannerReceiver,
   type ProfileConfigType,
 } from 'react-native-datawedge-intents';
+import DeviceInfo from 'react-native-device-info';
 
 const eventEmitter = new NativeEventEmitter();
 let isSuccessScan = false;
 
 export default function App() {
   const [result, setResult] = useState(null);
+  const [isZebraDevice, setIsZebraDevice] = useState(false);
 
   useEffect(() => {
-    isSuccessScan = false;
-    const profileConfig: ProfileConfigType = {
-      name: 'Example',
-      package: 'datawedgeintents.example',
-    };
-    ScannerInit(profileConfig);
-    const subscription = eventEmitter.addListener(
-      'datawedge_broadcast_intent',
-      _broadcastReceiverHandler
-    );
-    return () => {
-      subscription.remove();
-    };
+    async function _loadManufacture() {
+      const device = await DeviceInfo.getManufacturer();
+      if (device === 'Zebra Technologies' || device === 'Motorola Solutions') {
+        setIsZebraDevice(true);
+      } else {
+        setIsZebraDevice(false);
+      }
+    }
+    _loadManufacture();
   }, []);
+
+  useEffect(() => {
+    if (isZebraDevice) {
+      isSuccessScan = false;
+      const profileConfig: ProfileConfigType = {
+        name: 'Example',
+        package: 'datawedgeintents.example',
+      };
+      ScannerInit(profileConfig);
+      const subscription = eventEmitter.addListener(
+        'datawedge_broadcast_intent',
+        _broadcastReceiverHandler
+      );
+      return () => {
+        subscription.remove();
+      };
+    }
+    return () => {};
+  }, [isZebraDevice]);
 
   const _broadcastReceiverHandler = (intent: any) => {
     const objResult = ScannerReceiver(intent);

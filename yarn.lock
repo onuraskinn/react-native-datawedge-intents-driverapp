@@ -10617,9 +10617,19 @@ __metadata:
     react: 18.3.1
     react-native: 0.76.1
     react-native-builder-bob: ^0.31.0
+    react-native-device-info: ^14.0.0
     react-native-test-app: ^4.0.0
   languageName: unknown
   linkType: soft
+
+"react-native-device-info@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "react-native-device-info@npm:14.0.0"
+  peerDependencies:
+    react-native: "*"
+  checksum: d9990fce678c6c179f498866d5042f08dc9c3fec1a139fc12a83341b3289f4ee954e86613b1794047d7646d25f04a902d96927b0a52db9d324e194ffb99e8946
+  languageName: node
+  linkType: hard
 
 "react-native-test-app@npm:^4.0.0":
   version: 4.0.1
