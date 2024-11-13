@@ -1,7 +1,4 @@
-import {
-  registerBroadcastReceiver,
-  sendBroadcastWithExtras,
-} from 'react-native-datawedge-intents';
+import { registerBroadcastReceiver, sendBroadcastWithExtras } from './';
 
 export type ProfileConfigType = {
   name: string;
