@@ -27,25 +27,29 @@ import org.json.JSONObject
 import java.util.Observable
 import java.util.Observer
 
-
 class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(
     reactContext
   ),
   Observer, LifecycleEventListener {
+
+  override fun getName(): String {
+    return "DatawedgeIntents"
+  }
+
+  init {
+    reactContext.addLifecycleEventListener(this)
+    Log.v(TAG, "Constructing React native DataWedge intents module")
+
+    //  Register a broadcast receiver to return data back to the application
+    ObservableObject.getInstance().addObserver(this)
+  }
+
   //  The previously registered receiver (if any)
   private var registeredAction: String? = null
   private var registeredCategory: String? = null
 
   override fun onHostResume() {
-    //Log.v(TAG, "Host Resume");
-
-    //  Note regarding registerBroadcastReceiver:
-    //  This module makes no attempt to unregister the receiver when the application is paused and re-registers the
-    //  receiver when the application comes to the foreground.  Feel free to fork and add this logic to your solution if
-    //  required - I have found in the past this has led to confusion.
-    //  The logic below refers to the now deprecated broadcast receivers.
-
     val filter = IntentFilter()
     filter.addAction(ACTION_ENUMERATEDLISET)
     reactContext.registerReceiver(myEnumerateScannersBroadcastReceiver, filter)
@@ -56,26 +60,11 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
   }
 
   override fun onHostPause() {
-    //Log.v(TAG, "Host Pause");
-    //  Note regarding registerBroadcastReceiver:
-    //  This module makes no attempt to unregister the receiver when the application is paused and re-registers the
-    //  receiver when the application comes to the foreground.  Feel free to fork and add this logic to your solution if
-    //  required - I have found in the past this has led to confusion.
-    //  The logic below refers to the now deprecated broadcast receivers.
     unregisterReceivers()
   }
 
   override fun onHostDestroy() {
-    // Activity `onDestroy`
     Log.v(TAG, "Host Destroy")
-  }
-
-  override fun onCatalystInstanceDestroy() {
-    unregisterReceivers()
-  }
-
-  override fun getName(): String {
-    return "DatawedgeIntents"
   }
 
   override fun getConstants(): Map<String, Any>? {
@@ -156,6 +145,48 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
       }
     }
     reactContext.sendBroadcast(i)
+  }
+
+  @ReactMethod
+  fun registerReceiver(action: String?, category: String?) {
+    //  THIS METHOD IS DEPRECATED, use registerBroadcastReceiver
+    Log.d(
+      TAG,
+      "Registering an Intent filter for action: $action"
+    )
+    this.registeredAction = action
+    this.registeredCategory = category
+    //  User has specified the intent action and category that DataWedge will be reporting
+    unregisterReceiver(scannedDataBroadcastReceiver)
+    val filter = IntentFilter()
+    filter.addAction(action)
+    if (category != null && category.length > 0) filter.addCategory(category)
+    reactContext.registerReceiver(scannedDataBroadcastReceiver, filter)
+  }
+
+  @ReactMethod
+  fun registerBroadcastReceiver(filterObj: ReadableMap) {
+    unregisterReceiver(genericReceiver)
+    val filter = IntentFilter()
+    if (filterObj.hasKey("filterActions")) {
+      val type = filterObj.getType("filterActions")
+      if (type == ReadableType.Array) {
+        val actionsArray = filterObj.getArray("filterActions")
+        for (i in 0 until actionsArray!!.size()) {
+          filter.addAction(actionsArray.getString(i))
+        }
+      }
+    }
+    if (filterObj.hasKey("filterCategories")) {
+      val type = filterObj.getType("filterCategories")
+      if (type == ReadableType.Array) {
+        val categoriesArray = filterObj.getArray("filterCategories")
+        for (i in 0 until categoriesArray!!.size()) {
+          filter.addCategory(categoriesArray.getString(i))
+        }
+      }
+    }
+    reactContext.registerReceiver(genericReceiver, filter)
   }
 
   //  Credit: https://github.com/facebook/react-native/issues/4655
@@ -263,48 +294,6 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
     return returnBundle
   }
 
-  @ReactMethod
-  fun registerReceiver(action: String?, category: String?) {
-    //  THIS METHOD IS DEPRECATED, use registerBroadcastReceiver
-    Log.d(
-      TAG,
-      "Registering an Intent filter for action: $action"
-    )
-    this.registeredAction = action
-    this.registeredCategory = category
-    //  User has specified the intent action and category that DataWedge will be reporting
-    unregisterReceiver(scannedDataBroadcastReceiver)
-    val filter = IntentFilter()
-    filter.addAction(action)
-    if (category != null && category.length > 0) filter.addCategory(category)
-    reactContext.registerReceiver(scannedDataBroadcastReceiver, filter)
-  }
-
-  @ReactMethod
-  fun registerBroadcastReceiver(filterObj: ReadableMap) {
-    unregisterReceiver(genericReceiver)
-    val filter = IntentFilter()
-    if (filterObj.hasKey("filterActions")) {
-      val type = filterObj.getType("filterActions")
-      if (type == ReadableType.Array) {
-        val actionsArray = filterObj.getArray("filterActions")
-        for (i in 0 until actionsArray!!.size()) {
-          filter.addAction(actionsArray.getString(i))
-        }
-      }
-    }
-    if (filterObj.hasKey("filterCategories")) {
-      val type = filterObj.getType("filterCategories")
-      if (type == ReadableType.Array) {
-        val categoriesArray = filterObj.getArray("filterCategories")
-        for (i in 0 until categoriesArray!!.size()) {
-          filter.addCategory(categoriesArray.getString(i))
-        }
-      }
-    }
-    reactContext.registerReceiver(genericReceiver, filter)
-  }
-
   private fun unregisterReceivers() {
     unregisterReceiver(myEnumerateScannersBroadcastReceiver)
     unregisterReceiver(scannedDataBroadcastReceiver)
@@ -335,14 +324,6 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
       Log.v(TAG, "Received Broadcast from DataWedge API - Scanner")
       ObservableObject.getInstance().updateValue(intent)
     }
-  }
-
-  init {
-    reactContext.addLifecycleEventListener(this)
-    Log.v(TAG, "Constructing React native DataWedge intents module")
-
-    //  Register a broadcast receiver to return data back to the application
-    ObservableObject.getInstance().addObserver(this)
   }
 
   //  Sending events to JavaScript as defined in the native-modules documentation.
