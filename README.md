@@ -5,20 +5,48 @@ React Native Android module to interface with Zebra's DataWedge using Android In
 ## Installation
 
 ```sh
-npm install react-native-datawedge-intents
+npm install @edritech93/react-native-datawedge-intents
 ```
 
 ## Usage
 
+init scanner and listen
 
-```js
-import { multiply } from 'react-native-datawedge-intents';
+```ts
+import {
+  ScannerInit,
+  ScannerReceiver,
+} from '@edritech93/react-native-datawedge-intents';
 
 // ...
 
-const result = await multiply(3, 7);
-```
+const eventEmitter = new NativeEventEmitter();
 
+// ...
+
+const profileConfig: ProfileConfigType = {
+  name: 'Example',
+  package: 'datawedgeintents.example',
+};
+ScannerInit(profileConfig);
+const subscription = eventEmitter.addListener(
+  'datawedge_broadcast_intent',
+  _broadcastReceiverHandler
+);
+return () => {
+  subscription.remove();
+};
+
+// ...
+
+const _broadcastReceiverHandler = (intent: any) => {
+  const objResult = ScannerReceiver(intent);
+  // get data here
+  console.log(objResult.data);
+};
+
+// ...
+```
 
 ## Contributing
 
