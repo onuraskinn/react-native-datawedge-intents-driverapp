@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import com.facebook.react.bridge.Arguments
-import com.facebook.react.bridge.BridgeReactContext
 import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContext
@@ -31,9 +30,9 @@ import java.util.Observer
 class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(
     reactContext
-  )
-//  Observer,
-//  LifecycleEventListener
+  ),
+  Observer,
+  LifecycleEventListener
 {
 
   override fun getName(): String {
@@ -45,7 +44,7 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
     Log.v(TAG, "Constructing React native DataWedge intents module")
 
     //  Register a broadcast receiver to return data back to the application
-    ObservableObject.getInstance().addObserver(this)
+    ObservableObject.instance.addObserver(this)
   }
 
   //  The previously registered receiver (if any)
@@ -57,7 +56,7 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
   var myEnumerateScannersBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
       Log.v(TAG, "Received Broadcast from DataWedge API - Enumerate Scanners")
-      ObservableObject.getInstance().updateValue(intent)
+      ObservableObject.instance.updateValue(intent)
     }
   }
 
@@ -67,7 +66,7 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
   var scannedDataBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
       Log.v(TAG, "Received Broadcast from DataWedge API - Scanner")
-      ObservableObject.getInstance().updateValue(intent)
+      ObservableObject.instance.updateValue(intent)
     }
   }
 
@@ -239,9 +238,10 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
 
   //  Credit: https://github.com/facebook/react-native/issues/4655
   private fun recursivelyDeconstructReadableArray(readableArray: ReadableArray?): List<Any?> {
-    val deconstructedList: List<Any?> = ArrayList(
-      readableArray!!.size()
-    )
+    val deconstructedList = mutableListOf<Any?>()
+    if (readableArray == null) {
+      return deconstructedList
+    }
     for (i in 0 until readableArray.size()) {
       val indexType = readableArray.getType(i)
       when (indexType) {
@@ -426,7 +426,7 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
       override fun onReceive(context: Context, intent: Intent) {
         Log.v(TAG, "Received Broadcast from DataWedge")
         intent.putExtra("v2API", true)
-        ObservableObject.getInstance().updateValue(intent)
+        ObservableObject.instance.updateValue(intent)
       }
     }
   }
