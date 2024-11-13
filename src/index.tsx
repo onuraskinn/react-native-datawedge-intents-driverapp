@@ -1,4 +1,9 @@
 import { NativeModules, Platform } from 'react-native';
+import {
+  ScannerInit,
+  ScannerReceiver,
+  type ProfileConfigType,
+} from './scanner';
 
 const LINKING_ERROR =
   `The package 'react-native-datawedge-intents' doesn't seem to be linked. Make sure: \n\n` +
@@ -16,6 +21,8 @@ const DatawedgeIntents = NativeModules.DatawedgeIntents
         },
       }
     );
+
+export { ScannerInit, ScannerReceiver, type ProfileConfigType };
 
 export default {
   ACTION_SOFTSCANTRIGGER: DatawedgeIntents.ACTION_SOFTSCANTRIGGER,

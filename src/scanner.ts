@@ -3,10 +3,12 @@ import {
   sendBroadcastWithExtras,
 } from 'react-native-datawedge-intents';
 
-const config_scanner = {
-  name: 'Example',
-  package: 'datawedgeintents.example',
+export type ProfileConfigType = {
+  name: string;
+  package: string;
 };
+
+let currentProfileConfig: ProfileConfigType | null = null;
 
 let ean8checked = true;
 let ean13checked = true;
@@ -14,7 +16,8 @@ let code39checked = true;
 let code128checked = true;
 let isSendResult = false;
 
-export function ScannerInit() {
+export function ScannerInit(profileConfig: ProfileConfigType) {
+  currentProfileConfig = profileConfig;
   registerBroadcastReceiver({
     filterActions: [
       'com.zebra.reactnativedemo.ACTION',
@@ -33,7 +36,7 @@ export function ScannerTrigger() {
 export function ScannerDecoder() {
   // NOTE: Set the new configuration
   const body = {
-    PROFILE_NAME: config_scanner.name,
+    PROFILE_NAME: currentProfileConfig?.name,
     PROFILE_ENABLED: 'true',
     CONFIG_MODE: 'UPDATE',
     PLUGIN_CONFIG: {
@@ -109,7 +112,10 @@ export function ScannerReceiver(intent: any): any {
 }
 
 function datawedge63() {
-  sendCommand('com.symbol.datawedge.api.CREATE_PROFILE', config_scanner.name);
+  sendCommand(
+    'com.symbol.datawedge.api.CREATE_PROFILE',
+    currentProfileConfig?.name
+  );
   sendCommand('com.symbol.datawedge.api.GET_ACTIVE_PROFILE', ''); // NOTE: Although we created the profile we can only configure it with DW 6.4.
   sendCommand('com.symbol.datawedge.api.ENUMERATE_SCANNERS', ''); // NOTE: Enumerate the available scanners on the device
 }
@@ -117,7 +123,7 @@ function datawedge63() {
 function datawedge64() {
   // NOTE: Configure the created profile (associated app and keyboard plugin)
   const bodyAssociate = {
-    PROFILE_NAME: config_scanner.name,
+    PROFILE_NAME: currentProfileConfig?.name,
     PROFILE_ENABLED: 'true',
     CONFIG_MODE: 'UPDATE',
     PLUGIN_CONFIG: {
@@ -127,7 +133,7 @@ function datawedge64() {
     },
     APP_LIST: [
       {
-        PACKAGE_NAME: config_scanner.package,
+        PACKAGE_NAME: currentProfileConfig?.package,
         ACTIVITY_LIST: ['*'],
       },
     ],
@@ -136,7 +142,7 @@ function datawedge64() {
 
   // NOTE: Configure the created profile (intent plugin)
   const bodyIntent = {
-    PROFILE_NAME: config_scanner.name,
+    PROFILE_NAME: currentProfileConfig?.name,
     PROFILE_ENABLED: 'true',
     CONFIG_MODE: 'UPDATE',
     PLUGIN_CONFIG: {

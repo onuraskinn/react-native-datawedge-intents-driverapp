@@ -1,14 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NativeEventEmitter, StyleSheet, Text, View } from 'react-native';
-import { ScannerInit, ScannerReceiver } from './libs/scanner';
+import {
+  ScannerInit,
+  ScannerReceiver,
+  type ProfileConfigType,
+} from 'react-native-datawedge-intents';
 
 const eventEmitter = new NativeEventEmitter();
 let isSuccessScan = false;
 
 export default function App() {
+  const [result, setResult] = useState(null);
+
   useEffect(() => {
     isSuccessScan = false;
-    ScannerInit();
+    const profileConfig: ProfileConfigType = {
+      name: 'Example',
+      package: 'datawedgeintents.example',
+    };
+    ScannerInit(profileConfig);
     const subscription = eventEmitter.addListener(
       'datawedge_broadcast_intent',
       _broadcastReceiverHandler
@@ -19,10 +29,10 @@ export default function App() {
   }, []);
 
   const _broadcastReceiverHandler = (intent: any) => {
-    const result = ScannerReceiver(intent);
-    if (result && !isSuccessScan) {
+    const objResult = ScannerReceiver(intent);
+    if (objResult && !isSuccessScan) {
       isSuccessScan = true;
-      console.log('result', result);
+      setResult(objResult.data);
       setTimeout(() => {
         isSuccessScan = false;
       }, 500);
@@ -31,7 +41,10 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text>App</Text>
+      <Text style={styles.textInfo}>
+        Press Scan on Zebra Scanner, and see result below:
+      </Text>
+      <Text style={styles.textResult}>{JSON.stringify(result)}</Text>
     </View>
   );
 }
@@ -39,6 +52,14 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'red',
+    backgroundColor: 'cyan',
+    padding: 16,
+  },
+  textInfo: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  textResult: {
+    color: 'red',
   },
 });
