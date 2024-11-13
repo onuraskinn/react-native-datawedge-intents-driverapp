@@ -21,6 +21,7 @@ import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.bridge.WritableNativeMap
+import com.facebook.react.modules.core.DeviceEventManagerModule
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -30,8 +31,10 @@ import java.util.Observer
 class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(
     reactContext
-  ),
-  Observer, LifecycleEventListener {
+  )
+//  Observer,
+//  LifecycleEventListener
+{
 
   override fun getName(): String {
     return "DatawedgeIntents"
@@ -48,6 +51,25 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
   //  The previously registered receiver (if any)
   private var registeredAction: String? = null
   private var registeredCategory: String? = null
+
+  //  Broadcast receiver for the response to the Enumerate Scanner API
+  //  THIS METHOD IS DEPRECATED, you should enumerate scanners as shown in https://github.com/darryncampbell/DataWedgeReactNative/blob/master/App.js
+  var myEnumerateScannersBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+      Log.v(TAG, "Received Broadcast from DataWedge API - Enumerate Scanners")
+      ObservableObject.getInstance().updateValue(intent)
+    }
+  }
+
+  //  Broadcast receiver for the DataWedge intent being sent from Datawedge.
+  //  Note: DW must be configured to send broadcast intents
+  //  THIS METHOD IS DEPRECATED, you should enumerate scanners as shown in https://github.com/darryncampbell/DataWedgeReactNative/blob/master/App.js
+  var scannedDataBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+      Log.v(TAG, "Received Broadcast from DataWedge API - Scanner")
+      ObservableObject.getInstance().updateValue(intent)
+    }
+  }
 
   override fun onHostResume() {
     val filter = IntentFilter()
@@ -307,25 +329,6 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
     }
   }
 
-  //  Broadcast receiver for the response to the Enumerate Scanner API
-  //  THIS METHOD IS DEPRECATED, you should enumerate scanners as shown in https://github.com/darryncampbell/DataWedgeReactNative/blob/master/App.js
-  var myEnumerateScannersBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-      Log.v(TAG, "Received Broadcast from DataWedge API - Enumerate Scanners")
-      ObservableObject.getInstance().updateValue(intent)
-    }
-  }
-
-  //  Broadcast receiver for the DataWedge intent being sent from Datawedge.
-  //  Note: DW must be configured to send broadcast intents
-  //  THIS METHOD IS DEPRECATED, you should enumerate scanners as shown in https://github.com/darryncampbell/DataWedgeReactNative/blob/master/App.js
-  var scannedDataBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-      Log.v(TAG, "Received Broadcast from DataWedge API - Scanner")
-      ObservableObject.getInstance().updateValue(intent)
-    }
-  }
-
   //  Sending events to JavaScript as defined in the native-modules documentation.
   //  Note: Callbacks can only be invoked a single time so are not a suitable interface for barcode scans.
   private fun sendEvent(
@@ -333,7 +336,8 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
     eventName: String,
     params: WritableMap
   ) {
-    reactContext.getJSModule<BridgeReactContext.RCTDeviceEventEmitter>(BridgeReactContext.RCTDeviceEventEmitter::class.java)
+    reactContext
+      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
       .emit(eventName, params)
   }
 

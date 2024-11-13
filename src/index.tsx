@@ -17,10 +17,6 @@ const DatawedgeIntents = NativeModules.DatawedgeIntents
       }
     );
 
-export function multiply(a: number, b: number): Promise<number> {
-  return DatawedgeIntents.multiply(a, b);
-}
-
 export default {
   ACTION_SOFTSCANTRIGGER: DatawedgeIntents.ACTION_SOFTSCANTRIGGER,
   ACTION_SCANNERINPUTPLUGIN: DatawedgeIntents.ACTION_SCANNERINPUTPLUGIN,

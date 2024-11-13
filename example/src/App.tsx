@@ -1,38 +1,34 @@
-// import { useState, useEffect } from 'react';
-// import { StyleSheet, View, Text } from 'react-native';
-// import { multiply } from 'react-native-datawedge-intents';
+import { useEffect } from 'react';
+import { NativeEventEmitter, StyleSheet, Text, View } from 'react-native';
+import { ScannerInit, ScannerReceiver } from './libs/scanner';
 
-// export default function App() {
-//   const [result, setResult] = useState<number | undefined>();
-
-//   useEffect(() => {
-//     multiply(3, 7).then(setResult);
-//   }, []);
-
-//   return (
-//     <View style={styles.container}>
-//       <Text>Result: {result}</Text>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//   },
-//   box: {
-//     width: 60,
-//     height: 60,
-//     marginVertical: 20,
-//   },
-// });
-
-import { StyleSheet, Text, View } from 'react-native';
-// import React from 'react';
+const eventEmitter = new NativeEventEmitter();
+let isSuccessScan = false;
 
 export default function App() {
+  useEffect(() => {
+    isSuccessScan = false;
+    ScannerInit();
+    const subscription = eventEmitter.addListener(
+      'datawedge_broadcast_intent',
+      _broadcastReceiverHandler
+    );
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const _broadcastReceiverHandler = (intent: any) => {
+    const result = ScannerReceiver(intent);
+    if (result && !isSuccessScan) {
+      isSuccessScan = true;
+      console.log('result', result);
+      setTimeout(() => {
+        isSuccessScan = false;
+      }, 500);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text>App</Text>
