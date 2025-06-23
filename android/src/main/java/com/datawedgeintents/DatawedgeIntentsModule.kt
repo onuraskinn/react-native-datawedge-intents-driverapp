@@ -112,7 +112,7 @@ class DatawedgeIntentsModule(private val reactContext: ReactApplicationContext) 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             reactContext.registerReceiver(
                 broadcast, filter,
-                Context.RECEIVER_NOT_EXPORTED
+                Context.RECEIVER_EXPORTED
             )
         } else {
             reactContext.registerReceiver(broadcast, filter)
