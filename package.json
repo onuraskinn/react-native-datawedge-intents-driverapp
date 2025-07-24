@@ -1,7 +1,7 @@
 {
   "name": "@edritech93/react-native-datawedge-intents",
   "version": "1.0.2",
-  "private": false,
+  "private": true,
   "description": "React Native Android module to interface with Zebra's DataWedge using Android Intents to control the barcode scanner and retrieve scanned data",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
